@@ -1,0 +1,141 @@
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+import os
+from imageai.Detection import ObjectDetection
+import tempfile
+import asyncio
+from datetime import datetime, timedelta
+
+load_dotenv()
+
+# ImageAI modelini yükle
+detector = ObjectDetection()
+detector.setModelTypeAsYOLOv3()
+detector.setModelPath("yolov3.pt")
+detector.loadModel()
+
+# Bot ayarları
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+# Kullanıcı verilerini saklamak için basit bir sözlük
+user_data = {}
+
+@bot.event
+async def on_ready():
+    print(f'{bot.user.name} olarak giriş yapıldı!')
+
+@bot.command(name='gorevbaslat', help='Çöp toplama görevini başlatır')
+async def start_mission(ctx):
+    user_id = str(ctx.author.id)
+    
+    if user_id in user_data and user_data[user_id]['end_time'] > datetime.now():
+        remaining = user_data[user_id]['end_time'] - datetime.now()
+        hours, remainder = divmod(remaining.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        await ctx.send(f"Zaten devam eden bir göreviniz var! Kalan süre: {hours} saat {minutes} dakika")
+        return
+    
+    user_data[user_id] = {
+        'collected': 0,
+        'start_time': datetime.now(),
+        'end_time': datetime.now() + timedelta(hours=24)
+    }
+    
+    embed = discord.Embed(
+        title="Çöp Toplama Görevi Başladı!",
+        description="24 saat içinde 10 adet çöp fotoğrafı gönderin!",
+        color=discord.Color.green()
+    )
+    embed.add_field(name="Komut", value="!fotografyukle komutuyla fotoğraf gönderin")
+    await ctx.send(embed=embed)
+
+@bot.command(name='fotografyukle', help='Çöp fotoğrafı yükler')
+async def upload_photo(ctx):
+    user_id = str(ctx.author.id)
+    
+    # Görev kontrolü
+    if user_id not in user_data or user_data[user_id]['end_time'] < datetime.now():
+        await ctx.send("Önce !gorevbaslat komutuyla görev başlatmalısınız!")
+        return
+    
+    # Fotoğraf kontrolü
+    if not ctx.message.attachments:
+        await ctx.send("Lütfen bir fotoğraf ekleyin!")
+        return
+    
+    attachment = ctx.message.attachments[0]
+    if not attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        await ctx.send("Sadece PNG veya JPG formatında fotoğraf yükleyebilirsiniz!")
+        return
+    
+    # Fotoğrafı indir
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+    await attachment.save(temp_file.name)
+    
+    # Fotoğrafı analiz et
+    await ctx.send("Fotoğraf analiz ediliyor...")
+    
+    detections = detector.detectObjectsFromImage(
+        input_image=temp_file.name,
+        minimum_percentage_probability=30
+    )
+    
+    # Çöp olup olmadığını kontrol et
+    trash_objects = ['bottle', 'can', 'wrapper', 'trash', 'garbage', 'plastic']
+    is_trash = any(obj['name'].lower() in trash_objects for obj in detections)
+    
+    if is_trash:
+        user_data[user_id]['collected'] += 1
+        collected = user_data[user_id]['collected']
+        
+        if collected >= 10:
+            # Görev tamamlandı
+            embed = discord.Embed(
+                title="Tebrikler! 🎉",
+                description="10 çöp toplama görevini tamamladınız!",
+                color=discord.Color.gold()
+            )
+            await ctx.send(embed=embed)
+        else:
+            # İlerleme göster
+            embed = discord.Embed(
+                title="Çöp Tespit Edildi!",
+                description=f"Toplanan çöp: {collected}/10",
+                color=discord.Color.blue()
+            )
+            await ctx.send(embed=embed)
+    else:
+        await ctx.send("Bu bir çöp değil gibi görünüyor. Lütfen çöp fotoğrafı yükleyin!")
+
+    # Geçici dosyayı sil
+    temp_file.close()
+    os.unlink(temp_file.name)
+
+@bot.command(name='durum', help='Görev durumunu gösterir')
+async def show_status(ctx):
+    user_id = str(ctx.author.id)
+    
+    if user_id not in user_data or user_data[user_id]['end_time'] < datetime.now():
+        await ctx.send("Aktif bir göreviniz yok. !gorevbaslat komutuyla başlatabilirsiniz.")
+        return
+    
+    collected = user_data[user_id]['collected']
+    end_time = user_data[user_id]['end_time']
+    remaining = end_time - datetime.now()
+    
+    hours, remainder = divmod(remaining.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    
+    embed = discord.Embed(
+        title="Görev Durumu",
+        color=discord.Color.orange()
+    )
+    embed.add_field(name="Toplanan Çöp", value=f"{collected}/10", inline=True)
+    embed.add_field(name="Kalan Süre", value=f"{hours} saat {minutes} dakika", inline=True)
+    
+    await ctx.send(embed=embed)
+
+bot.run(os.getenv('MTM1NjIyMTkwMzQ3NTQ0NTk3Mg.GYA2Ui._R3mbE9LSlkw5ET1EdcV5GFcvVabY_RLxlgKvk'))
