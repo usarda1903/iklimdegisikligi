@@ -2,13 +2,15 @@ Bu projede karbon ayak izini hesaplayabilmemiz için içinde kayıt ve giriş si
 
 İşte Bu Projeden Bazı Fotoğraflar:
 
-![image](https://github.com/user-attachments/assets/b3978990-d3c6-4b07-b9b7-d1ae048d1a73)
+![image](https://github.com/user-attachments/assets/54eec6ea-6b22-4c0f-b064-f6c4d816371c)
 
-![image](https://github.com/user-attachments/assets/09da8563-65ca-4a34-93df-ed7615ab88df)
+![image](https://github.com/user-attachments/assets/75f7e3be-f5fe-42f8-a62f-fc1659edd312)
 
-![image](https://github.com/user-attachments/assets/01e266d5-976c-4807-9741-36fd1838409e)
+![image](https://github.com/user-attachments/assets/d09d8f31-8197-46aa-8d91-d5d497d9df48)
 
-![image](https://github.com/user-attachments/assets/a95ccd91-24ce-424e-b4b4-0643b93b7c6a)
+![image](https://github.com/user-attachments/assets/68c93591-beb6-4d70-bebd-ad040051b166)
+
+
 
 
 
