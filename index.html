@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Karbon Ayak İzi Hesapla</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Karbon Ayak İzi Hesapla</h2>
+    {% if not logged_in %}
+    <a href="/register">Kayıt Ol</a><br>
+{% endif %}
+
+<a href="/login">Giriş Yap</a><br>
+
+{% if logged_in %}
+    <a href="/logout">Çıkış Yap</a>
+{% endif %}
+    <form action="/sonuc" method="post">
+        <p>Haftalık araba km: <input type="number" name="araba" required></p>
+        <p>Aylık elektrik kWh: <input type="number" name="elektrik" required></p>
+        <p>Yıllık uçuş km: <input type="number" name="ucak" required></p>
+        <p>Haftalık etli öğün: <input type="number" name="et" required></p>
+        <button type="submit">Hesapla</button>
+        
+        
+    </form>
+    
+</body>
+</html>
